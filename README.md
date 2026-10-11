@@ -202,6 +202,12 @@ records to stderr showing which uv was resolved and how, whether
 values and environment contents are never logged, so index credentials in
 URLs stay out of the output. With the variable unset, uv's stderr is untouched.
 
+### Observability
+
+uvpip is a stateless, short-lived command-line wrapper rather than a long-running service or daemon. Consequently, continuous background health listeners, Prometheus metrics scrapers, and network observability endpoints do not exist. Instead, observability is tailored to the CLI execution lifecycle:
+- **On-demand diagnostic health:** [`uvpip doctor`](#diagnostics) validates local PATH shims, uv binary discovery, and Python runtime availability.
+- **Structured execution audit logging:** Setting [`UVPIP_DEBUG=1`](#environment-variables) emits structured key-value diagnostics (`log/slog`) to standard error tracking command translation, environment configuration, process exit codes, and execution latency without logging credential-bearing arguments. Critical execution failures (such as missing uv executables) emit structured Info audit records to stderr even when debug mode is disabled.
+
 ### Environment Variables
 
 All variables are optional. [.env.example](.env.example) documents each one;
