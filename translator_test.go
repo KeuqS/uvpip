@@ -34,6 +34,13 @@ func TestTranslateToUV(t *testing.T) {
 		{"help", []string{"--help"}, []string{"pip", "--help"}},
 		{"case preserved", []string{"INSTALL", "Pkg"}, []string{"pip", "INSTALL", "Pkg"}},
 		{"literal args", []string{"install", "a;b", "$(cmd)", "a\"b", "x y", ""}, []string{"pip", "install", "a;b", "$(cmd)", "a\"b", "x y", ""}},
+		{"wheel", []string{"wheel", "pkg"}, []string{"pip", "wheel", "pkg"}},
+		{"debug", []string{"debug"}, []string{"pip", "debug"}},
+		{"quiet flag", []string{"install", "-q", "pkg"}, []string{"pip", "install", "-q", "pkg"}},
+		{"isolated flag", []string{"install", "--isolated", "pkg"}, []string{"pip", "install", "--isolated", "pkg"}},
+		{"retries flag", []string{"install", "--retries", "5", "pkg"}, []string{"pip", "install", "--retries", "5", "pkg"}},
+		{"no-input flag", []string{"install", "--no-input", "pkg"}, []string{"pip", "install", "--no-input", "pkg"}},
+		{"dry-run flag", []string{"install", "--dry-run", "pkg"}, []string{"pip", "install", "--dry-run", "pkg"}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
