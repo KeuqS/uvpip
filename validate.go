@@ -1,14 +1,14 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
 )
 
 // errUsage marks input rejected before uv starts; runCLI maps it to exit status 2.
-var errUsage = errors.New("usage error")
+// It wraps ErrInvalidArgs so callers can inspect failure types programmatically.
+var errUsage = fmt.Errorf("%w: usage error", ErrInvalidArgs)
 
 // CLIInputs specifies all user-supplied inputs evaluated at CLI boundaries:
 // command arguments and environment configuration overrides.
@@ -18,8 +18,8 @@ type CLIInputs struct {
 }
 
 // ValidateInputs runs boundary validation on all CLI entry point inputs.
-// It returns an error wrapping errUsage if arguments are invalid, or an error
-// describing invalid environment configuration overrides.
+// It returns a typed error wrapping ErrInvalidArgs if arguments are invalid,
+// or ErrInvalidOverride if environment configuration overrides are malformed.
 func ValidateInputs(inputs CLIInputs) error {
 	if len(inputs.Args) > 0 || inputs.UVOverride == "" {
 		if err := validateArgs(inputs.Args); err != nil {
@@ -49,11 +49,11 @@ func validateArgs(args []string) error {
 func validateUVOverride(path string) error {
 	switch {
 	case strings.TrimSpace(path) == "":
-		return fmt.Errorf("UVPIP_UV is set but blank; unset it or give an absolute path")
+		return fmt.Errorf("%w: UVPIP_UV is set but blank; unset it or give an absolute path", ErrInvalidOverride)
 	case strings.TrimSpace(path) != path:
-		return fmt.Errorf("UVPIP_UV has leading or trailing whitespace; check its quoting")
+		return fmt.Errorf("%w: UVPIP_UV has leading or trailing whitespace; check its quoting", ErrInvalidOverride)
 	case !filepath.IsAbs(path):
-		return fmt.Errorf("UVPIP_UV must be an absolute executable path")
+		return fmt.Errorf("%w: UVPIP_UV must be an absolute executable path", ErrInvalidOverride)
 	}
 	return nil
 }

@@ -90,18 +90,19 @@ func TestValidateInputs(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, tt := range []struct {
-		name    string
-		inputs  CLIInputs
-		wantErr string
+		name      string
+		inputs    CLIInputs
+		wantTyped error
+		wantErr   string
 	}{
-		{"valid args without override", CLIInputs{Args: []string{"install", "pkg"}}, ""},
-		{"valid args with valid override", CLIInputs{Args: []string{"list"}, UVOverride: abs}, ""},
-		{"empty args", CLIInputs{Args: nil}, "pip command is empty"},
-		{"blank command", CLIInputs{Args: []string{"  "}}, "pip command is empty"},
-		{"blank UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: "  "}, "blank"},
-		{"whitespace-padded UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: abs + " "}, "whitespace"},
-		{"malformed relative UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: "uv"}, "absolute"},
-		{"valid override only", CLIInputs{UVOverride: abs}, ""},
+		{"valid args without override", CLIInputs{Args: []string{"install", "pkg"}}, nil, ""},
+		{"valid args with valid override", CLIInputs{Args: []string{"list"}, UVOverride: abs}, nil, ""},
+		{"empty args", CLIInputs{Args: nil}, ErrInvalidArgs, "pip command is empty"},
+		{"blank command", CLIInputs{Args: []string{"  "}}, ErrInvalidArgs, "pip command is empty"},
+		{"blank UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: "  "}, ErrInvalidOverride, "blank"},
+		{"whitespace-padded UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: abs + " "}, ErrInvalidOverride, "whitespace"},
+		{"malformed relative UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: "uv"}, ErrInvalidOverride, "absolute"},
+		{"valid override only", CLIInputs{UVOverride: abs}, nil, ""},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateInputs(tt.inputs)
@@ -113,6 +114,9 @@ func TestValidateInputs(t *testing.T) {
 			}
 			if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 				t.Fatalf("err = %v, want mention of %q", err, tt.wantErr)
+			}
+			if tt.wantTyped != nil && !errors.Is(err, tt.wantTyped) {
+				t.Fatalf("err %v does not wrap typed error %v", err, tt.wantTyped)
 			}
 		})
 	}

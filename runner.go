@@ -23,13 +23,6 @@ const (
 	exitNotFound      = 127
 )
 
-var (
-	// ErrUVNotFound indicates uv could not be located in PATH or candidate locations.
-	ErrUVNotFound = errors.New("uv executable not found")
-	// ErrRecursiveExecution prevents uvpip from calling itself in an infinite loop.
-	ErrRecursiveExecution = errors.New("uv resolves to uvpip itself; refusing recursive execution")
-)
-
 // runUV never invokes a shell or downloads code. Streams pass through unchanged.
 // log receives opt-in diagnostics only; it never sees argument or env values.
 func runUV(args []string, stdin io.Reader, stdout, stderr io.Writer, log *slog.Logger) int {
