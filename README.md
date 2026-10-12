@@ -11,12 +11,10 @@ uv, your packages, network, and environment; uvpip is not a complete pip emulato
 a backend service: no network listeners, no daemon, no persistent state, and no
 database. Each invocation runs uv once and exits with uv's status.
 
-> **Source versus releases:** This README describes the revised, unreleased
-> source. The published [v1.0.0 release](https://github.com/yv3000/uvpip/releases/tag/v1.0.0)
-> predates these changes. Running a revised installer without a local binary
-> still downloads the latest **published** binary, not a build of this source.
-> Use the local-build route below to get the revised runtime. The source still
-> reports version `1.0.0`; record the source commit, not just the version string.
+> **Releases:** Tagged releases with multi-platform binary assets and SHA-256
+> checksum manifests are published at [releases](https://github.com/yv3000/uvpip/releases).
+> Running an installer without a local binary downloads the latest published
+> release asset. Use the local-build route below to compile directly from source.
 
 ## Requirements
 

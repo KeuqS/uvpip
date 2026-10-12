@@ -1,11 +1,14 @@
 # Changelog
 
-## Unreleased
+## v1.0.1 - 2026-10-12
 
-These changes describe revised source, not the downloadable v1.0.0 binaries.
-The source version constant remains `1.0.0`; identify builds by source commit.
+Maintenance release introducing CLI input boundary schema defenses, multi-platform candidate path testing, automated GitHub Releases, and threat model documentation.
 
 - Add centralized CLI boundary validation schema (`ValidateInputs`, `CLIInputs`)
+  enforcing argument limits, argument length constraints, and null-byte defenses (`validate.go`, `validate_test.go`).
+- Add comprehensive cross-platform candidate path and environment casing unit tests (`runner_test.go`).
+- Add explicit installer threat model and trust boundaries in `SECURITY.md`, cross-linked in `README.md` and `CONTRIBUTING.md`.
+- Add automated multi-platform binary release pipeline in `.github/workflows/release.yml`.
   coordinating command arguments and path overrides with table-driven assertions (`validate.go`).
 - Add structured Info-level failure audit trail logging in runner for binary discovery
   and process execution failures outside debug mode (`runner.go`, `logging.go`).
