@@ -5,8 +5,14 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(gomod)"
+    rebase-strategy: "auto"
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    commit-message:
+      prefix: "deps(actions)"
+    rebase-strategy: "auto"

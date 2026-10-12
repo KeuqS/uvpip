@@ -15,7 +15,8 @@ pip / pip3 shim or shell function
 | File | Role |
 | --- | --- |
 | `main.go` | Entry point and dispatch. No business logic. |
-| `validate.go` | Boundary checks for CLI args and the `UVPIP_UV` override. Never echoes values. |
+| `errors.go` | Typed sentinel error taxonomy (`ErrInvalidArgs`, `ErrInvalidOverride`, `ErrUVNotFound`, `ErrRecursiveExecution`, `ErrTranslation`) for structured failure classification. |
+| `validate.go` | Boundary schema checks for CLI args (count, length, null bytes) and the `UVPIP_UV` override. Never echoes values. |
 | `translator.go` | Pure function: pip argv to uv argv. `uninstall -y` stripping, `upgrade` alias, `cache`. |
 | `runner.go` | uv discovery (`UVPIP_UV`, then PATH, then per-user dirs; rejects `ErrDot` and self), `UV_SYSTEM_PYTHON` defaulting, exec with untouched streams, exit codes 126/127. |
 | `doctor.go` | `uvpip doctor`: probes uv/python versions and recognizes shipped pip shims. |
@@ -30,6 +31,10 @@ pip / pip3 shim or shell function
 - No network at runtime: uvpip never downloads; only the explicit installer may.
 - Fail closed: invalid `UVPIP_UV` or malformed profile markers error out instead
   of guessing.
+- Typed error taxonomy: failure modes wrap explicit sentinel errors (`errors.go`),
+  enabling programmatic inspection and deterministic error unwrapping.
+- Explicit schema boundaries: CLI boundaries validate input size and reject
+  null-byte injections before argument translation or subprocess execution.
 - Secrets stay out of logs: debug records carry counts and paths, never argument
   values or environment contents.
 
