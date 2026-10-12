@@ -33,7 +33,8 @@ To maintain repository quality, security hygiene, and predictable development ca
    - Pinned vulnerability audit (`govulncheck`) and secret scan (`gitleaks`).
    - Strict test coverage gate enforcing >= 90% statement coverage across all operating systems.
 4. **Offline Installer Verification**: Changes affecting shell or PowerShell installers must pass offline test suites (`scripts/test-installers.sh` and `scripts/test-installers.ps1`) without touching real system environments.
-5. **Review Turnaround**: Maintainers review open PRs for functional correctness, security impact, and test coverage before merging directly to `main`.
+5. **Installer Threat Model Alignment**: Before approving any modifications to `installer/install.sh` or `installer/install.ps1`, reviewers must consult the threat model and trust boundaries defined in [SECURITY.md](SECURITY.md#threat-model-installer-scripts-and-trust-boundaries). Installer changes must preserve staging isolation, respect caller-supplied SHA-256 validation, and never elevate privileges or mutate system-wide configurations.
+6. **Review Turnaround**: Maintainers review open PRs for functional correctness, security impact, and test coverage before merging directly to `main`.
 
 ## Toolchain
 

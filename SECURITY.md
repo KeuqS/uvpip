@@ -23,7 +23,18 @@ schedule or security-support lifetime is promised. Check the changelog and exact
 release provenance before deployment; use reviewed source builds when you need
 the unreleased behavior.
 
-## Trust Boundaries
+## Threat Model: Installer Scripts and Trust Boundaries
+
+### Installer Scripts Threat Model
+
+`installer/install.sh` and `installer/install.ps1` automate downloading and setting up uvpip for interactive user shells. Their threat model and security boundaries are defined as follows:
+
+- **Unauthenticated Remote Downloads**: When executed without a pre-existing local binary, installer scripts fetch release assets from GitHub Releases over HTTPS (`--proto https --tlsv1.2`). While transport encryption is enforced, release assets and mutable `releases/latest/download` URLs are not signed with GPG or cryptographic keys.
+- **Optional SHA-256 Verification**: Both installers support optional digest verification via `-SHA256 <hash>` (PowerShell) or `UVPIP_SHA256=<hash>` (POSIX sh). When supplied, the script asserts the SHA-256 hash before executing or moving the candidate binary. If the checksum mismatches, installation aborts immediately. Checksums are not automatically pulled from remote manifests; operators must supply an independently validated digest.
+- **Recommendation to Build From Source**: For high-assurance, enterprise, or air-gapped installations, operators should not pipe remote installer scripts into a shell. Instead, build uvpip directly from reviewed source using `go build ./...` with pinned dependencies, and supply the resulting executable to the installer via `-BinaryPath` / `UVPIP_BINARY`.
+- **Upstream uv Bootstrapping**: If `uv` is not found on PATH or candidate paths, explicit installation downloads and executes Astral's official `uv` installer. That upstream bootstrap script has its own external security boundaries and network requirements.
+
+### Runtime Trust Boundaries
 
 - The revised runtime starts a resolved uv executable with an argument array,
   not a shell. It does not download uv, elevate privileges, or retry failures

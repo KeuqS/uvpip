@@ -109,7 +109,9 @@ digest to validate a new candidate binary before execution.
   signatures. Hashing a local build detects a changed copy, not malicious source.
 - Without a local binary, installers download the platform asset from
   `releases/latest/download`. That URL is mutable. Review the exact release and
-  obtain a trusted checksum, or build reviewed source yourself.
+  obtain a trusted checksum, or build reviewed source yourself. See
+  [SECURITY.md](SECURITY.md#threat-model-installer-scripts-and-trust-boundaries)
+  for the installer threat model and trust boundaries.
 - If uv is absent from command lookup, explicit installation downloads its
   official installer fully before executing it. A local uvpip binary alone does
   not make installation offline; uv must already be available.
