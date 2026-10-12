@@ -197,7 +197,7 @@ func TestFindUV(t *testing.T) {
 	}
 }
 
-func TestCandidatePaths(t *testing.T) {
+func TestUvCandidatePaths(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
@@ -229,6 +229,63 @@ func TestCandidatePaths(t *testing.T) {
 			t.Fatalf("relative home candidate %q", p)
 		}
 	}
+
+	// Simulated GOOS=windows with mocked APPDATA/LOCALAPPDATA across all host OSes
+	t.Run("simulated windows mock", func(t *testing.T) {
+		roaming := filepath.Join(home, "AppData", "Roaming")
+		local := filepath.Join(home, "AppData", "Local")
+		mockEnv := func(k string) string {
+			switch k {
+			case "APPDATA":
+				return roaming
+			case "LOCALAPPDATA":
+				return local
+			default:
+				return ""
+			}
+		}
+		winPaths := candidatePathsFor("windows", mockEnv, home)
+		if len(winPaths) < 4 {
+			t.Fatalf("expected at least 4 windows candidate paths, got %d: %v", len(winPaths), winPaths)
+		}
+		foundRoaming, foundLocal := false, false
+		for _, p := range winPaths {
+			if !filepath.IsAbs(p) {
+				t.Fatalf("windows candidate path not absolute: %s", p)
+			}
+			if !strings.HasSuffix(p, ".exe") {
+				t.Fatalf("windows candidate path missing .exe suffix: %s", p)
+			}
+			if strings.Contains(p, "astral") {
+				foundRoaming = true
+			}
+			if strings.Contains(p, "Programs") {
+				foundLocal = true
+			}
+		}
+		if !foundRoaming || !foundLocal {
+			t.Fatalf("missing mocked roaming or local paths: roaming=%v local=%v in %v", foundRoaming, foundLocal, winPaths)
+		}
+	})
+
+	// Simulated POSIX fallback check
+	t.Run("simulated posix mock", func(t *testing.T) {
+		posixPaths := candidatePathsFor("linux", func(string) string { return "" }, home)
+		if len(posixPaths) < 2 {
+			t.Fatalf("expected at least 2 home candidate paths, got %v", posixPaths)
+		}
+		if runtime.GOOS != "windows" {
+			foundUsrLocal := false
+			for _, p := range posixPaths {
+				if p == "/usr/local/bin/uv" {
+					foundUsrLocal = true
+				}
+			}
+			if !foundUsrLocal {
+				t.Fatalf("missing /usr/local/bin/uv in posix paths: %v", posixPaths)
+			}
+		}
+	})
 }
 
 func TestFindUVRejectsSelf(t *testing.T) {
@@ -300,5 +357,28 @@ func TestBuildEnv(t *testing.T) {
 	}
 	if got := buildEnv([]string{"virtual_env=venv"}); !reflect.DeepEqual(got, want) {
 		t.Fatalf("case rules: %v", got)
+	}
+}
+
+func TestBuildEnvKeyCasing(t *testing.T) {
+	// Assert uppercase normalization behavior on Windows vs POSIX preservation
+	env := []string{"virtual_env=/tmp/myenv", "conda_prefix=/tmp/conda", "uv_system_python=1"}
+	res := buildEnv(env)
+	if runtime.GOOS == "windows" {
+		// On Windows, case-insensitive comparison recognizes virtual_env and conda_prefix without adding duplicate UV_SYSTEM_PYTHON
+		if len(res) != len(env) {
+			t.Fatalf("expected windows buildEnv to recognize lowercase virtual_env, got %v", res)
+		}
+	} else {
+		// On POSIX, case sensitivity means virtual_env is not VIRTUAL_ENV, so UV_SYSTEM_PYTHON is appended
+		foundDefault := false
+		for _, e := range res {
+			if e == "UV_SYSTEM_PYTHON=1" {
+				foundDefault = true
+			}
+		}
+		if !foundDefault {
+			t.Fatalf("expected POSIX buildEnv to append UV_SYSTEM_PYTHON=1 for lowercase virtual_env, got %v", res)
+		}
 	}
 }

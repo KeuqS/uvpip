@@ -129,19 +129,23 @@ func lookupUV(lookPath func(string) (string, error), candidates []string) (strin
 
 func uvCandidatePaths() []string {
 	home, _ := os.UserHomeDir()
+	return candidatePathsFor(runtime.GOOS, os.Getenv, home)
+}
+
+func candidatePathsFor(goos string, getenv func(string) string, home string) []string {
 	var paths []string
 	name := "uv"
-	if runtime.GOOS == "windows" {
+	if goos == "windows" {
 		name += ".exe"
 	}
 	if home != "" {
 		paths = append(paths, filepath.Join(home, ".local", "bin", name), filepath.Join(home, ".cargo", "bin", name))
 	}
-	if runtime.GOOS == "windows" {
-		if dir := os.Getenv("APPDATA"); dir != "" {
+	if goos == "windows" {
+		if dir := getenv("APPDATA"); dir != "" {
 			paths = append(paths, filepath.Join(dir, "astral", "uv", "bin", name))
 		}
-		if dir := os.Getenv("LOCALAPPDATA"); dir != "" {
+		if dir := getenv("LOCALAPPDATA"); dir != "" {
 			paths = append(paths, filepath.Join(dir, "Programs", "uv", name))
 		}
 	} else {
