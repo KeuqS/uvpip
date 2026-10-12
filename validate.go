@@ -34,14 +34,35 @@ func ValidateInputs(inputs CLIInputs) error {
 	return nil
 }
 
+const (
+	maxArgCount = 512
+	maxArgLen   = 4096
+)
+
+// validateArgBounds verifies schema boundary limits on argument count, argument length, and null-byte injection.
+func validateArgBounds(args []string) error {
+	if len(args) > maxArgCount {
+		return fmt.Errorf("%w: argument count %d exceeds maximum limit (%d)", errUsage, len(args), maxArgCount)
+	}
+	for i, a := range args {
+		if len(a) > maxArgLen {
+			return fmt.Errorf("%w: argument %d length %d exceeds maximum limit (%d)", errUsage, i, len(a), maxArgLen)
+		}
+		if strings.ContainsRune(a, '\x00') {
+			return fmt.Errorf("%w: argument %d contains forbidden null byte", errUsage, i)
+		}
+	}
+	return nil
+}
+
 // validateArgs rejects a blank pip command, which uv would only report as an
-// unrecognized empty subcommand. Values are never echoed: arguments can embed
-// index credentials.
+// unrecognized empty subcommand, and enforces argument boundary constraints.
+// Values are never echoed: arguments can embed index credentials.
 func validateArgs(args []string) error {
 	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
 		return fmt.Errorf("%w: pip command is empty", errUsage)
 	}
-	return nil
+	return validateArgBounds(args)
 }
 
 // validateUVOverride checks a non-empty UVPIP_UV before path lookup, so common

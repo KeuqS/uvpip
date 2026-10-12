@@ -103,6 +103,9 @@ func TestValidateInputs(t *testing.T) {
 		{"whitespace-padded UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: abs + " "}, ErrInvalidOverride, "whitespace"},
 		{"malformed relative UVPIP_UV", CLIInputs{Args: []string{"list"}, UVOverride: "uv"}, ErrInvalidOverride, "absolute"},
 		{"valid override only", CLIInputs{UVOverride: abs}, nil, ""},
+		{"null byte in args", CLIInputs{Args: []string{"install", "pkg\x00name"}}, ErrInvalidArgs, "forbidden null byte"},
+		{"oversized single argument", CLIInputs{Args: []string{"install", strings.Repeat("a", 4097)}}, ErrInvalidArgs, "exceeds maximum limit"},
+		{"oversized argument count", CLIInputs{Args: append([]string{"install"}, make([]string, 513)...)}, ErrInvalidArgs, "exceeds maximum limit"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			err := ValidateInputs(tt.inputs)
