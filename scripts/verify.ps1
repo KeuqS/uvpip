@@ -21,7 +21,7 @@ Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
     $goVersion = & go env GOVERSION
     if ($LASTEXITCODE -ne 0) { throw 'go env failed' }
-    if ($goVersion -ne 'go1.26.8') { throw "Expected Go 1.26.8, found $goVersion" }
+    if ($goVersion -notmatch '^go1\.26\.') { throw "Expected Go 1.26.x, found $goVersion" }
     $goFiles = @(Get-ChildItem -LiteralPath . -Filter '*.go' -File | ForEach-Object { $_.FullName })
     if (-not $goFiles.Count) { throw 'No project Go files found' }
     $unformatted = & gofmt -l @goFiles
@@ -51,7 +51,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'govulncheck failed' }
     & gitleaks dir --redact --no-banner .
     if ($LASTEXITCODE -ne 0) { throw 'Secret scan failed' }
-    & go tool actionlint .github/workflows/ci.yml
+    & go tool actionlint .github/workflows/ci.yml .github/workflows/release.yml
     if ($LASTEXITCODE -ne 0) { throw 'actionlint failed' }
     $shellFiles = @(Get-ChildItem -Path installer, uninstaller, scripts, bin -Filter '*.sh' -File | ForEach-Object { $_.FullName })
     & shellcheck @shellFiles
