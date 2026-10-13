@@ -179,6 +179,15 @@ blank values and values with leading or trailing whitespace (usually a quoting
 mistake) are reported as such.
 Only point the override and PATH at trusted executables.
 
+### Input Validation Boundaries
+
+To defend against injection and malformed argument overflows, `ValidateInputs` enforces explicit schema limits before translating or launching child processes:
+- **Argument count limit**: Maximum of **512** arguments per invocation. Larger argument arrays are rejected with exit code **2** (`ErrInvalidArgs`).
+- **Argument length limit**: Maximum of **4,096** characters per individual argument. Oversized arguments are rejected with exit code **2** (`ErrInvalidArgs`).
+- **Null-byte defense**: Any argument containing an embedded null byte (`\x00`) is rejected immediately with exit code **2** to prevent C-string termination attacks.
+- **Path override constraints**: `UVPIP_UV` must be a clean, unpadded, absolute path; relative paths or whitespace-padded values are rejected with exit code **2** (`ErrInvalidOverride`).
+Argument and override contents are never echoed back in stderr records, preventing credential leakage from embedded index tokens.
+
 Shell functions can keep intercepting `pip` after virtual environment activation
 when the profile was loaded. Noninteractive processes, aliases, other profiles,
 and venv PATH precedence can bypass them. Call `uvpip` explicitly in automation.
