@@ -22,7 +22,8 @@ func runCLI(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	// Handle uvpip-native commands
 	switch args[0] {
 	case "doctor":
-		return runDoctor(stdout)
+		log := newLogger(stderr, os.Getenv("UVPIP_DEBUG"))
+		return runDoctor(stdout, log)
 	case "--version", "-V":
 		fmt.Fprintf(stdout, "uvpip v%s (uv-powered pip wrapper)\n", version)
 		return 0

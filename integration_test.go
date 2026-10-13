@@ -57,7 +57,7 @@ func TestInstallDoctorUninstallLifecycle(t *testing.T) {
 	// Stage 1: Pre-install state.
 	// Neither pip nor pip3 shim exists in PATH, so doctor must fail.
 	var preDocOut bytes.Buffer
-	if code := runDoctor(&preDocOut); code != 1 || !strings.Contains(preDocOut.String(), "[!!]") {
+	if code := runDoctor(&preDocOut, quiet); code != 1 || !strings.Contains(preDocOut.String(), "[!!]") {
 		t.Fatalf("expected pre-install doctor failure, got code %d output:\n%s", code, preDocOut.String())
 	}
 
@@ -132,7 +132,7 @@ func TestInstallDoctorUninstallLifecycle(t *testing.T) {
 	// Stage 6: Doctor check after uninstallation.
 	t.Setenv("UVPIP_TEST_MODE", "version")
 	var postUninstallDoc bytes.Buffer
-	if code := runDoctor(&postUninstallDoc); code != 1 || !strings.Contains(postUninstallDoc.String(), "[!!]") {
+	if code := runDoctor(&postUninstallDoc, quiet); code != 1 || !strings.Contains(postUninstallDoc.String(), "[!!]") {
 		t.Fatalf("expected doctor failure post-uninstall, got code %d output:\n%s", code, postUninstallDoc.String())
 	}
 }

@@ -66,18 +66,37 @@ func TestDoctor(t *testing.T) {
 		}
 	}
 	out.Reset()
-	if code := runDoctor(&out); code != 1 || strings.Count(out.String(), "not a recognized") != 2 {
+	if code := runDoctor(&out, quiet); code != 1 || strings.Count(out.String(), "not a recognized") != 2 {
 		t.Fatalf("code %d: %s", code, &out)
 	}
 	t.Setenv("UVPIP_TEST_MODE", "exit")
 	out.Reset()
-	if code := runDoctor(&out); code != 1 || strings.Count(out.String(), "[!!]") != 4 {
+	if code := runDoctor(&out, quiet); code != 1 || strings.Count(out.String(), "[!!]") != 4 {
 		t.Fatalf("failed executable accepted %d: %s", code, &out)
 	}
 	t.Setenv("PATH", t.TempDir())
 	t.Setenv("UVPIP_UV", filepath.Join(dir, "missing"))
 	out.Reset()
-	if code := runDoctor(&out); code != 1 || strings.Count(out.String(), "[!!]") != 4 {
+	if code := runDoctor(&out, quiet); code != 1 || strings.Count(out.String(), "[!!]") != 4 {
 		t.Fatalf("missing dependencies accepted %d: %s", code, &out)
+	}
+}
+
+func TestDoctorStructuredLogging(t *testing.T) {
+	fixtureUV(t)
+	t.Setenv("UVPIP_TEST_MODE", "version")
+	t.Setenv("UVPIP_DEBUG", "1")
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Setenv("UVPIP_UV", filepath.Join(dir, "missing"))
+
+	var stdout, stderr bytes.Buffer
+	code := runCLI([]string{"doctor"}, nil, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("expected exit 1 for failed doctor run, got %d", code)
+	}
+	got := stderr.String()
+	if !strings.Contains(got, `msg="doctor check failed"`) || !strings.Contains(got, "target=uv") {
+		t.Fatalf("expected structured log for doctor failure in stderr, got: %q", got)
 	}
 }

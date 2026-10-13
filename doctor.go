@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
@@ -11,7 +12,7 @@ import (
 )
 
 // Doctor checks executables, not parent-shell aliases/functions it cannot observe.
-func runDoctor(out io.Writer) int {
+func runDoctor(out io.Writer, log *slog.Logger) int {
 	fmt.Fprintln(out, "uvpip doctor (PATH executables; shell functions are not visible)")
 	code := 0
 	for _, name := range []string{"uv", "pip", "pip3", "python"} {
@@ -42,9 +43,11 @@ func runDoctor(out io.Writer) int {
 			}
 		}
 		if err != nil {
+			log.Info("doctor check failed", "target", name, "error", err)
 			fmt.Fprintf(out, "[!!] %s: %v\n", name, err)
 			code = 1
 		} else {
+			log.Debug("doctor check passed", "target", name, "resolved", path)
 			fmt.Fprintf(out, "[OK] %s: %s\n", name, path)
 		}
 	}
