@@ -19,8 +19,52 @@ env:
   GOFLAGS: -mod=readonly
 
 jobs:
+  lint:
+    name: Lint & Static Audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.26.8'
+          cache-dependency-path: go.sum
+
+      - name: Install golangci-lint v2.14.0 and Gitleaks v8.30.1
+        run: |
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Lint (golangci-lint)
+        run: golangci-lint run ./...
+
+      - name: Lint workflows (actionlint)
+        run: go tool actionlint .github/workflows/ci.yml .github/workflows/release.yml
+
+      - name: Install checksum-pinned ShellCheck 0.11.0
+        run: |
+          asset=shellcheck-v0.11.0.linux.x86_64.tar.gz
+          curl -fsSL -o "$RUNNER_TEMP/$asset" "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/$asset"
+          echo "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6  $RUNNER_TEMP/$asset" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/$asset" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/shellcheck-v0.11.0" >> "$GITHUB_PATH"
+
+      - name: Lint shell scripts (shellcheck)
+        run: shellcheck installer/*.sh uninstaller/*.sh scripts/*.sh bin/*.sh
+
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: ./scripts/check-powershell.ps1
+
+      - name: Secret scan (gitleaks)
+        run: gitleaks dir --redact --no-banner .
+
   test:
     name: Test (${{ matrix.os }})
+    needs: lint
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     strategy:
@@ -104,45 +148,3 @@ jobs:
           & powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File scripts/test-installers.ps1 -TestRoot $tests.FullName -CacheRoot $cache.FullName
           if ($LASTEXITCODE -ne 0) { throw 'Windows installer tests failed' }
 
-  lint:
-    name: Lint
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
-        with:
-          go-version: '1.26.8'
-          cache-dependency-path: go.sum
-
-      - name: Install golangci-lint v2.14.0 and Gitleaks v8.30.1
-        run: |
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
-          go install github.com/zricethezav/gitleaks/v8@v8.30.1
-          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-
-      - name: Lint (golangci-lint)
-        run: golangci-lint run ./...
-
-      - name: Lint workflows (actionlint)
-        run: go tool actionlint .github/workflows/ci.yml .github/workflows/release.yml
-
-      - name: Install checksum-pinned ShellCheck 0.11.0
-        run: |
-          asset=shellcheck-v0.11.0.linux.x86_64.tar.gz
-          curl -fsSL -o "$RUNNER_TEMP/$asset" "https://github.com/koalaman/shellcheck/releases/download/v0.11.0/$asset"
-          echo "b7af85e41cc99489dcc21d66c6d5f3685138f06d34651e6d34b42ec6d54fe6f6  $RUNNER_TEMP/$asset" | sha256sum -c -
-          tar -xzf "$RUNNER_TEMP/$asset" -C "$RUNNER_TEMP"
-          echo "$RUNNER_TEMP/shellcheck-v0.11.0" >> "$GITHUB_PATH"
-
-      - name: Lint shell scripts (shellcheck)
-        run: shellcheck installer/*.sh uninstaller/*.sh scripts/*.sh bin/*.sh
-
-      - name: Parse PowerShell scripts
-        shell: pwsh
-        run: ./scripts/check-powershell.ps1
-
-      - name: Secret scan (gitleaks)
-        run: gitleaks dir --redact --no-banner .

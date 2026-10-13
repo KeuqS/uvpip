@@ -36,6 +36,17 @@ To maintain repository quality, security hygiene, and predictable development ca
 5. **Installer Threat Model Alignment**: Before approving any modifications to `installer/install.sh` or `installer/install.ps1`, reviewers must consult the threat model and trust boundaries defined in [SECURITY.md](SECURITY.md#threat-model-installer-scripts-and-trust-boundaries). Installer changes must preserve staging isolation, respect caller-supplied SHA-256 validation, and never elevate privileges or mutate system-wide configurations.
 6. **Review Turnaround**: Maintainers review open PRs for functional correctness, security impact, and test coverage before merging directly to `main`.
 
+## First Contribution Guide: Submitting a PR with Tests
+
+To make your first contribution smooth and reviewable:
+1. **Choose a focused change**: Pick an isolated bug fix, documentation refinement, or small testable enhancement.
+2. **Follow the Test-Paired Pattern**: Every change to an implementation file (such as `runner.go`, `doctor.go`, or `validate.go`) must be accompanied by updates to its sibling test file (such as `runner_test.go`, `doctor_test.go`, or `validate_schema_test.go`). Use table-driven subtests (`t.Run`) and mock environments where applicable, following the pattern demonstrated in `runner_test.go`'s `TestUvCandidatePaths`.
+3. **Run local offline verification**: Ensure offline tests pass with >= 90% statement coverage before opening a PR:
+   ```powershell
+   powershell.exe -ExecutionPolicy Bypass -File scripts/verify.ps1 -TestRoot $tests -CacheRoot $cache
+   ```
+4. **Use Conventional Commits**: Structure all commit messages adhering to conventional commit format (`feat(scope): ...`, `test(scope): ...`, `docs(scope): ...`, `ci(scope): ...`).
+
 ## Toolchain
 
 Verification is pinned to:
