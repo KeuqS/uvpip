@@ -45,7 +45,7 @@ Verification is pinned to:
 - govulncheck `golang.org/x/vuln` v1.8.0 and actionlint `github.com/rhysd/actionlint`
   v1.7.7, pinned as Go `tool` directives in `go.mod` with hashes in `go.sum`.
   Run them as `go tool govulncheck ./...` and `go tool actionlint`; no separate
-  install step is needed, and Dependabot's `gomod` updates cover them.
+  install step is needed, and automated updates are tracked by [.github/dependabot.yml](.github/dependabot.yml).
 - golangci-lint: `github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0`
   (runs staticcheck, govet, errcheck, gosec, and others per `.golangci.yml`).
   Installed with `go install` rather than a `tool` directive because its ~250

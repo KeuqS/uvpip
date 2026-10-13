@@ -50,10 +50,11 @@ go test ./...            # full unit + subprocess-fixture suite, offline
 The same commands, plus `go vet`, a 90% coverage gate, `golangci-lint`,
 `govulncheck`, ShellCheck, and installer tests, run on every push and pull
 request in [CI](.github/workflows/ci.yml). Tests never touch your real profile,
-PATH, pip, or uv. `go.sum` exists only because development tools (`govulncheck`,
-`actionlint`) are pinned with Go `tool` directives in `go.mod`; they are not
-linked into the uvpip binary. See [CONTRIBUTING.md](CONTRIBUTING.md) for the
-full verifier.
+PATH, pip, or uv. `go.sum` exists only because development tools (`govulncheck`, `actionlint`) are
+pinned with Go `tool` directives in `go.mod`; they are dev-only and never linked
+into the uvpip binary. Automated weekly dependency updates for tools and Actions
+are managed via [.github/dependabot.yml](.github/dependabot.yml). See
+[CONTRIBUTING.md](CONTRIBUTING.md) for the full verifier.
 
 ## Install From Source
 
